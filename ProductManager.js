@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { arch } = require('os');
 
 class ProductManager{
     #id = null
@@ -8,8 +9,10 @@ class ProductManager{
       this.path = path
     }
 
-    addProduct(title, description, price, thumbnail, code, stock){
+    async addProduct(title, description, price, thumbnail, code, stock){
       let objects = this.getProducts()
+
+
       if(title && description && price && thumbnail && code && stock){
         if(this.verifyCode(code, objects)){
           if(!this.#id){
@@ -28,7 +31,7 @@ class ProductManager{
           objects.push(object)
           let JsonList = JSON.stringify(objects)
 
-          fs.writeFileSync(this.path, JsonList)
+          await fs.promises.writeFile(this.path, JsonList)
 
           this.#id += 1
         }
@@ -39,13 +42,17 @@ class ProductManager{
 
     verifyCode(newCode, products){
         let codes = []
-        products.forEach(product => codes.push(product.code))
-        if(!codes.includes(newCode)){
-            return(true)
-        }else{
-            console.log("El codigo se encuentra repetido")
-            return(false)
+        console.log(products)
+        if(products.length >= 1){
+          products.forEach(product => codes.push(product.code))
+          if(!codes.includes(newCode)){
+              return(true)
+          }else{
+              console.log("El codigo se encuentra repetido")
+              return(false)
+          }
         }
+        
     }
 
     getId(){
@@ -61,19 +68,28 @@ class ProductManager{
       return(maxId)
     }
 
-    getProducts(){
-      if(fs.existsSync(this.path)){
-        let archivo = fs.readFileSync(this.path)
-        try{
-          let archivoAdaptado = JSON.parse(archivo)
-          return(archivoAdaptado)
-        }catch{
-          return([])
-        }
-        
-      }else{
-        return("Incorrect path")
-      }
+    async getProducts(){
+      // try{
+      //   let archivo = await fs.promises.readFile(this.path, 'utf-8')
+      //   try{
+      //     //console.log(archivo)
+      //     let archivoAdaptado = JSON.parse(archivo)
+      //     return(archivoAdaptado)
+      //   }catch{
+      //     return([])
+      //   }
+      // }catch(error){
+      //   return(error)
+      // }
+      let archivoAdaptado = "a"
+      fs.promises.readFile(this.path, 'utf-8')
+      .then((res) => {
+        //console.log(JSON.parse(res))
+        archivoAdaptado = JSON.parse(res)
+        return(archivoAdaptado)
+      })
+      .catch(err => err)
+      
   }
 
     getProductById(id){
@@ -143,15 +159,17 @@ class ProductManager{
     }
   }
   
-const productManager = new ProductManager(String.raw`./test.json`)
+const productManager = new ProductManager(String.raw`.\test.json`)
   
-// productManager.addProduct("Coca Cola 500ml", "Esta sabroza cola premium resalta por si sola gracias a su perfecta efervecencia y buen balance de sabores", 950, "www.imagen.com", "cc500", 43)
+//productManager.addProduct("Coca Cola 500ml", "Esta sabroza cola premium resalta por si sola gracias a su perfecta efervecencia y buen balance de sabores", 950, "www.imagen.com", "cc500", 43)
 // productManager.addProduct("Pepsi 500ml", "Refrescante cola con un toque de limón, perfecta para cualquier ocasión.", 850, "www.imagen.com/pepsi", "p500", 50)
 // productManager.addProduct("Fanta Naranja 355ml", "Bebida gaseosa con sabor a naranja natural, ideal para acompañar tus comidas.", 750, "www.imagen.com/fanta-naranja", "f355", 60)
 // productManager.addProduct("Sprite Zero 330ml", "Refresco burbujeante con sabor a lima-limón, sin calorías y sin azúcar.", 700, "www.imagen.com/sprite-zero", "s330", 30)
 // productManager.addProduct("Schweppes Tónica 250ml", "Tónica clásica con un equilibrado sabor a quinina, perfecta para combinar con tu ginebra favorita.", 600, "www.imagen.com/schweppes-tonica", "s250", 25)
 
-// console.log(productManager.getProducts())
+productManager.getProducts()
+.then(res => console.log(res))
+console.log(productManager.getProducts())
 // productManager.deleteProduct(3)
 
 // console.log(productManager.getProductById(2))
